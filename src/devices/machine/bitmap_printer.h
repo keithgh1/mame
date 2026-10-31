@@ -25,7 +25,7 @@ class bitmap_printer_device : public device_t
 {
 public:
 	bitmap_printer_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	bitmap_printer_device(const machine_config &mconfig, const char *tag, device_t *owner, int paper_width, int paper_height, int hdpi, int vdpi);
+	bitmap_printer_device(const machine_config &mconfig, const char *tag, device_t *owner, int paper_width, int paper_height, int hdpi, int vdpi, int screen_height = PAPER_SCREEN_HEIGHT);
 
 	enum
 	{
@@ -61,6 +61,7 @@ public:
 	void set_cr_stepper_ratio(int ratio0, int ratio1);
 
 	void set_continuous_feed(bool continuous) { m_continuous_feed = continuous; }
+	void set_paper_aspect() ATTR_COLD;
 
 	int m_cr_direction; // direction of carriage
 	int m_xpos;
@@ -104,6 +105,7 @@ private:
 	int m_paper_height;
 	int m_hdpi;
 	int m_vdpi;
+	int m_screen_height;
 	int m_clear_pos;
 	int m_newpage_flag;  // used to keep printhead at the top of page until actual printing
 	bool m_continuous_feed;

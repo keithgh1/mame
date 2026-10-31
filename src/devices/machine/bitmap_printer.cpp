@@ -66,12 +66,18 @@ void bitmap_printer_device::device_add_mconfig(machine_config &config)
 	screen_device &screen(SCREEN(config, m_screen));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
-	screen.set_size(m_paper_width, PAPER_SCREEN_HEIGHT);
-	screen.set_visarea(0, m_paper_width - 1, 0, PAPER_SCREEN_HEIGHT - 1);
+	screen.set_size(m_paper_width, m_screen_height);
+	screen.set_visarea(0, m_paper_width - 1, 0, m_screen_height - 1);
 	screen.set_screen_update(FUNC(bitmap_printer_device::screen_update_bitmap));
 
 	STEPPER(config, m_pf_stepper, (uint8_t) 0xa);
 	STEPPER(config, m_cr_stepper, (uint8_t) 0xa);
+}
+
+// show the paper at its real proportions instead of the default 4:3
+void bitmap_printer_device::set_paper_aspect()
+{
+	m_screen.lookup()->set_physical_aspect(m_paper_width * m_vdpi, m_screen_height * m_hdpi);
 }
 
 //**************************************************************************
@@ -99,6 +105,7 @@ bitmap_printer_device::bitmap_printer_device(const machine_config &mconfig, devi
 	m_paper_height(0),
 	m_hdpi(0),
 	m_vdpi(0),
+	m_screen_height(PAPER_SCREEN_HEIGHT),
 	m_clear_pos(0),
 	m_newpage_flag(0),
 	m_continuous_feed(false),
@@ -123,13 +130,14 @@ bitmap_printer_device::bitmap_printer_device(const machine_config &mconfig, cons
 {
 }
 
-bitmap_printer_device::bitmap_printer_device(const machine_config &mconfig, const char *tag, device_t *owner, int paper_width, int paper_height, int hdpi, int vdpi) :
+bitmap_printer_device::bitmap_printer_device(const machine_config &mconfig, const char *tag, device_t *owner, int paper_width, int paper_height, int hdpi, int vdpi, int screen_height) :
 	bitmap_printer_device(mconfig, tag, owner, u32(0))
 {
 	m_paper_width = paper_width;
 	m_paper_height = paper_height;
 	m_hdpi = hdpi;
 	m_vdpi = vdpi;
+	m_screen_height = screen_height;
 }
 
 //-------------------------------------------------
@@ -638,7 +646,7 @@ bool bitmap_printer_device::check_new_page()
 
 		// clear page down to visible area, starting from the top of page
 		m_clear_pos = 0;
-		clear_to_pos(m_paper_height - 1 - PAPER_SCREEN_HEIGHT),
+		clear_to_pos(m_paper_height - 1 - m_screen_height);
 
 		m_ypos = get_top_margin();  // lock to the top of page until we seek horizontally
 		m_pf_stepper->set_absolute_position(get_top_margin() / m_pf_stepper_ratio0 * m_pf_stepper_ratio1);
